@@ -46,8 +46,8 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
         struct.samples_per_stop = lines[9]                  # Number
         struct.time_between_position_samples = lines[10]    # us
         struct.position_samples_per_integration = lines[11] # Number
-        struct.AoD_Xfactor = lines[13]                      # um/MHz
-        struct.AoD_Yfactor = lines[14]                      # um/MHz
+        struct.AoD_Xfactor = lines[13]                      # nm/MHz
+        struct.AoD_Yfactor = lines[14]                      # nm/MHz
         file.close()
 
     elif lines[-1] == np.float32(0.3):
@@ -64,8 +64,8 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
         struct.samples_per_stop = lines[9]              # Number
         struct.time_unit = lines[10]                    # us
         struct.time_units_per_sample = lines[11]        # Number
-        struct.AoD_Xfactor = lines[13]                  # um/MHz
-        struct.AoD_Yfactor = lines[14]                  # um/MHz
+        struct.AoD_Xfactor = lines[13]                  # nm/MHz
+        struct.AoD_Yfactor = lines[14]                  # nm/MHz
         file.close()
 
     elif lines[-1] == np.float32(0.45):
@@ -82,8 +82,8 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
         struct.samples_per_stop = lines[9]                  # Number
         struct.time_between_position_samples = lines[10]    # us
         struct.position_samples_per_integration = lines[11] # Number
-        struct.AoD_Xfactor = lines[13]                      # um/MHz
-        struct.AoD_Yfactor = lines[14]                      # um/MHz
+        struct.AoD_Xfactor = lines[13]                      # nm/MHz
+        struct.AoD_Yfactor = lines[14]                      # nm/MHz
         file.close()
         # Read in the raw pin file
         file = open(raw_loc, "r")
@@ -111,12 +111,14 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     # Get the experiment data from another file
     file = open(exp_loc, "r")
     data = np.loadtxt(file)
-    X_positions = data[:, 0]
-    Y_positions = data[:, 1]
-    Intensities = data[:, 2]
-    Z_positions = data[:, 3]
-    X_AOD_position = data[:, 4]
-    Y_AOD_position = data[:, 5]
+    # Remove rows that are zero-rows (from a default value issue in LabView)
+    stop_index = np.where(~data[:, 0:3].any(axis=1))[0]
+    X_positions = data[0:stop_index[0], 0]
+    Y_positions = data[0:stop_index[0], 1]
+    Intensities = data[0:stop_index[0], 2]
+    Z_positions = data[0:stop_index[0], 3]
+    X_AOD_position = data[0:stop_index[0], 4]
+    Y_AOD_position = data[0:stop_index[0], 5]
     # Do we shift it so the mean position is zero?
     if mean_shift:
         struct.X_positions = X_positions - np.mean(X_positions)
