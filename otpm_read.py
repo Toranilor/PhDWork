@@ -4,6 +4,7 @@ import numpy as np
 def calib_raw_read(calib_file):
     file = open(calib_file, 'r')
     data = np.loadtxt(file)
+    file.close()
     # File format is 4 rows:
     # X AoD Position
     # PSD Value
@@ -12,6 +13,16 @@ def calib_raw_read(calib_file):
     return data
 
 
+def calib_read(calib_file):
+    file = open(calib_file, 'r')
+    data = np.loadtxt(file)
+    calib = exp_data('calib')
+    file.close()
+    # 2x rows of b+mx
+    # Row 1 is for x dir, row 2 is y dir
+    return data
+
+    
 class exp_data:
     # I don't know if there's a better way to define
     # a class, but this is just so I can make a 'struct'
@@ -113,12 +124,20 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     data = np.loadtxt(file)
     # Remove rows that are zero-rows (from a default value issue in LabView)
     stop_index = np.where(~data[:, 0:3].any(axis=1))[0]
-    X_positions = data[0:stop_index[0], 0]
-    Y_positions = data[0:stop_index[0], 1]
-    Intensities = data[0:stop_index[0], 2]
-    Z_positions = data[0:stop_index[0], 3]
-    X_AOD_position = data[0:stop_index[0], 4]
-    Y_AOD_position = data[0:stop_index[0], 5]
+    if stop_index:
+        X_positions = data[0:stop_index[0], 0]
+        Y_positions = data[0:stop_index[0], 1]
+        Intensities = data[0:stop_index[0], 2]
+        Z_positions = data[0:stop_index[0], 3]
+        X_AOD_position = data[0:stop_index[0], 4]
+        Y_AOD_position = data[0:stop_index[0], 5]
+    else:
+        X_positions = data[:, 0]
+        Y_positions = data[:, 1]
+        Intensities = data[:, 2]
+        Z_positions = data[:, 3]
+        X_AOD_position = data[:, 4]
+        Y_AOD_position = data[:, 5]
     # Do we shift it so the mean position is zero?
     if mean_shift:
         struct.X_positions = X_positions - np.mean(X_positions)
@@ -126,4 +145,5 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     else:
         struct.X_positions = X_positions
         struct.Y_positions = Y_positions
+    file.close()
     return struct
