@@ -46,7 +46,7 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     lines = np.float32(file.read().split('\t'))
     if lines[-1] == np.float32(0.4):
         struct.Xmin = lines[0]                              # MHz
-        struct.Ymax = lines[1]                              # MHz
+        struct.Xmax = lines[1]                              # MHz
         struct.Xpoints = lines[2]                           # Number
         struct.Ymin = lines[3]                              # MHz
         struct.Ymax = lines[4]                              # MHz
@@ -64,7 +64,7 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     elif lines[-1] == np.float32(0.3):
         #   An older version of the info file
         struct.Xmin = lines[0]                          # MHz
-        struct.Ymax = lines[1]                          # MHz
+        struct.Xmax = lines[1]                          # MHz
         struct.Xpoints = lines[2]                       # Number
         struct.Ymin = lines[3]                          # MHz
         struct.Ymax = lines[4]                          # MHz
@@ -82,7 +82,7 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     elif lines[-1] == np.float32(0.45):
         # This is 0.4, but we also have a 'RAW' data file
         struct.Xmin = lines[0]                              # MHz
-        struct.Ymax = lines[1]                              # MHz
+        struct.Xmax = lines[1]                              # MHz
         struct.Xpoints = lines[2]                           # Number
         struct.Ymin = lines[3]                              # MHz
         struct.Ymax = lines[4]                              # MHz
