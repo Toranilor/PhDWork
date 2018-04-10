@@ -145,5 +145,9 @@ def param_read(param_loc, exp_loc, name, mean_shift=False, raw_loc='none'):
     else:
         struct.X_positions = X_positions
         struct.Y_positions = Y_positions
+    struct.X_AoD_position = X_AOD_position
+    struct.Y_AoD_position = Y_AOD_position
+    struct.Z_positions = Z_positions
+    struct.intensities = Intensities
     file.close()
-    return struct
+    return struct   
