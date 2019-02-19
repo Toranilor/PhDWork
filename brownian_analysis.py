@@ -4,6 +4,8 @@ A set of functions to do some brownian motion analysis
     Display for graphs will be in relevant axes
 """
 import numpy as np
+import scipy as sp
+import matplotlib
 
 def stiffness_MSD(x, T):
     """
@@ -16,3 +18,17 @@ def stiffness_MSD(x, T):
     MSD = np.mean((x-np.mean(x))**2)
     stiffness = k_b*T/MSD
     return stiffness
+
+def gaussian_fit(x, T):
+    """
+    Performs a gaussian fit to a histogram of x.
+    Also returns the stiffness according to this fit.
+        x is a one dimensional position array
+        T is the temperature in kelvin
+    """
+    from scipy.stats import norm
+    from matplotlib import pyplot as plt
+    (mu, sigma) = norm.fit(x)
+    plt.hist(x)
+
+
