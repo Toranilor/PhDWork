@@ -74,8 +74,13 @@ def lorentz_wrapper(guess, **kwargs):
     print(np.linalg.norm(residuals))
     return residuals
 
+def find_nearest(array, value):
+    array = np.asarray(array)
+    idx = (np.abs(array - value)).argmin()
+    return idx
 
-def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=2000):
+
+def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=50000):
     """
     Takes the power spectrum of x and fits a lorentzian
     Returns the stiffness according to this fit, and the figure
@@ -94,12 +99,19 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=2000)
     import scipy.fftpack as fp
     import scipy.optimize
 
+
     # Perform the fourier transform of x, and square it's norm to get the power spectrum;
     X = np.fft.rfft(x)
     freq_bins = (1/timestep)*np.array(range(np.size(X)))/np.size(X)
-    power, positions = log_blocking(np.abs(X)**2, n_blocks)
+
+    f_start_id = find_nearest(freq_bins, f_start)
+    f_end_id = find_nearest(freq_bins, f_end)
+
+    X_cut = X[f_start_id:f_end_id]
+
+    power, positions = log_blocking(np.abs(X_cut)**2, n_blocks)
     f,ax = plt.subplots()
-    ax.loglog(freq_bins[int(positions)], power)
+    ax.loglog(freq_bins[(positions.astype(int)-1)], power)
 
     kwargs = {
     "x": positions,
