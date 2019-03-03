@@ -70,8 +70,6 @@ def lorentz_wrapper(guess, **kwargs):
     y = kwargs.get('y')
 
     residuals = (lorentz_func(x, fc=guess[0], num=guess[1]) - y)
-    print(guess)
-    print(np.linalg.norm(residuals))
     return residuals
 
 def find_nearest(array, value):
@@ -80,10 +78,10 @@ def find_nearest(array, value):
     return idx
 
 
-def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=50000):
+def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000):
     """
     Takes the power spectrum of x and fits a lorentzian
-    Returns the stiffness according to this fit, and the figure
+    Returns the corner frequency according to this fit, and the figure
         x is a one dimensional positional array
         timestep is the timestep of sampling
         n_blocks is the number of blocks to concatonate the sample to
@@ -94,6 +92,7 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=50000
     Berg-Sorensen, K. & Flyvbjerg, H. 
     Power spectrum analysis for optical tweezers. Rev. Sci. Instrum. 75, 594-612
     https://www.researchgate.net/publication/224481725_Berg-Sorensen_K_Flyvbjerg_H_Power_spectrum_analysis_for_optical_tweezers_Rev_Sci_Instrum_75_594-612
+    
     """
 
     import scipy.fftpack as fp
@@ -102,7 +101,7 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=50000
 
     # Perform the fourier transform of x, and square it's norm to get the power spectrum;
     X = np.fft.rfft(x)
-    freq_bins = (1/timestep)*np.array(range(np.size(X)))/np.size(X)
+    freq_bins = (0.5/timestep)*np.array(range(np.size(X)))/np.size(X)
 
     f_start_id = find_nearest(freq_bins, f_start)
     f_end_id = find_nearest(freq_bins, f_end)
@@ -114,12 +113,32 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=50000
     ax.loglog(freq_bins[(positions.astype(int)-1)], power)
 
     kwargs = {
-    "x": positions,
+    "x": freq_bins[(positions.astype(int)-1)],
     "y": power
     }
-    guesses = scipy.optimize.least_squares(lorentz_wrapper, x0 = [1000, 30], kwargs=kwargs, method='lm')
-    print(guesses.nfev)
-    ax.loglog(positions, lorentz_func(positions, fc=guesses.x[0], num=guesses.x[1]))
+    guesses = scipy.optimize.least_squares(lorentz_wrapper, x0 = [10, 0], kwargs=kwargs, method='lm')
+    ax.loglog(freq_bins[(positions.astype(int)-1)], lorentz_func(freq_bins[(positions.astype(int)-1)], fc=guesses.x[0], num=guesses.x[1]))
+    plt.xlabel('Frequency, Hz')
+    plt.ylabel('Power, nm^2/Hz')
 
+    return guesses.x[0]
         
 
+def fc_stiff(fc, radius=False, stokes=False, dnvis=False):
+    """
+    A function to evaluate the trap stiffness of a particle given it's corner frequency
+    You can provide either the radius (assumed a spherical particle), or the stokes drag coeff.
+            I also need the dynamic viscoscity of the fluid (dynvis)
+    """
+    import numpy as np
+
+    if radius is not False:
+        stokes_drag = 6*np.pi*dnvis*radius
+    elif stokes is not False:
+        stokes_drag = stokes
+    else:
+        print("Radius or Stokes Drag not Specified!") 
+        return 0
+
+    stiffness = fc*2*np.pi*stokes_drag
+    return stiffness
