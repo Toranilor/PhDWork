@@ -117,11 +117,13 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000
     "y": power
     }
     guesses = scipy.optimize.least_squares(lorentz_wrapper, x0 = [10, 0], kwargs=kwargs, method='lm')
+    fc = guesses.x[0] # The corner freuency.
     ax.loglog(freq_bins[(positions.astype(int)-1)], lorentz_func(freq_bins[(positions.astype(int)-1)], fc=guesses.x[0], num=guesses.x[1]))
     plt.xlabel('Frequency, Hz')
     plt.ylabel('Power, nm^2/Hz')
+    ax.set_title('Corner Frequency: %i Hz' % fc)
 
-    return guesses.x[0]
+    return guesses.x[0], f
         
 
 def fc_stiff(fc, radius=False, stokes=False, dnvis=False):
@@ -142,3 +144,19 @@ def fc_stiff(fc, radius=False, stokes=False, dnvis=False):
 
     stiffness = fc*2*np.pi*stokes_drag
     return stiffness
+
+def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000, radius=0.5*10**-6, dnvis=0.001):
+    """
+    A function to compute the trap stiffness via lorentzian and fitting a gaussian.
+        Default parameters are for a 1um sphere in water
+    """
+
+    stiff_gauss, fig_gauss = gaussian_fit(x, T)
+    fc, fig_lorentzian = lorentzian_fit(x, timestep, n_blocks, f_start, f_end)
+    stiff_lorentzian = fc_stiff(fc, radius=radius, dnvis=dnvis)
+
+    print('Gaussian Stiffness: %.3e N/m' % stiff_gauss)
+    print('Lorentzian Stiffness: %.3e N/m' % stiff_lorentzian)
+    plt.show()
+
+    return 0
