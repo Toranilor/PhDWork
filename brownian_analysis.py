@@ -38,7 +38,7 @@ def gaussian_fit(x, T):
     # add a 'best fit' line
     y = mlab.normpdf(bins, mu, sigma)
     ax.plot(bins, y, 'r--', linewidth=2)
-    ax.set_xlabel('position deviation, nm')
+    ax.set_xlabel('position deviation metres')
     stiff =  k_b*T/((sigma)**2)
     ax.legend(['Gaussian fit', 'Position Histogram'])
     ax.set_title('Axis Stiffness: %.3e N/m' % stiff)
