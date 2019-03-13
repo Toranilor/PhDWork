@@ -20,6 +20,27 @@ def stiffness_MSD(x, T):
     stiffness = k_b*T/MSD
     return stiffness
 
+def MSD_gen(x, num_sub_traj=1000):
+    """
+    Generate an averaged mean-squared-displacement 
+    """
+
+    buff = 10
+    # A number-of-points buffer to ensure we don't overlap sub trajectories
+    sub_traj_points = np.size(x)//num_sub_traj
+
+    MSD = np.zeros((num_sub_traj, sub_traj_points-buff))
+    for i in range(num_sub_traj):
+        MSD_Start = i*sub_traj_points
+        for j in range(sub_traj_points-buff):
+            MSD[i,j] = (x[MSD_Start] - x[MSD_Start+j])**2
+
+    # Return the average MSD 
+    MSD_avg = np.mean(MSD, axis=0)
+
+    return MSD_avg
+
+
 def gaussian_fit(x, T):
     """
     Performs a gaussian fit to a histogram of x.
