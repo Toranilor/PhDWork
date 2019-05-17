@@ -77,7 +77,7 @@ def param_read(param_loc=False,
     lines = np.float32(file.read().split('\t'))
     v_num = lines[-1]
     if param_loc:
-        if v_num == np.float32(0.4) or v_num == np.float32(0.45) or v_num == np.float32(0.46):
+        if v_num == np.float32(0.4) or v_num == np.float32(0.45) or v_num == np.float32(0.46) or v_num == np.float32(0.47):
             struct.Xmin = lines[0]                              # MHz
             struct.Xmax = lines[1]                              # MHz
             struct.Xpoints = lines[2]                           # Number
