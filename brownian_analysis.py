@@ -66,13 +66,13 @@ def gaussian_fit(x, T):
     ax.set_ylabel('Normalised Frequency')
     return stiff, f
 
-def log_blocking(x, n_blocks):
+def log_blocking(x, n_blocks,f_start):
     """
     Perform block-averaging of a frequency-space signal, in such a way that blocks at higher frequencies
         contain MORE samples - i.e. the spacing of blocks is logarythmic, not uniform.
     """
 
-    index_locs = np.linspace(10,np.size(x),n_blocks)
+    index_locs = np.linspace(f_start,np.size(x),n_blocks)
     block = np.zeros((n_blocks-1))
     for i in range(np.size(index_locs)-1):
         block[i] = np.mean(x[int(index_locs[i]):int(index_locs[i+1])])
@@ -129,7 +129,7 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000
 
     X_cut = X[f_start_id:f_end_id]
 
-    power, positions = log_blocking(np.abs(X_cut)**2, n_blocks)
+    power, positions = log_blocking(np.abs(X_cut)**2, n_blocks, f_start)
     f,ax = plt.subplots()
     ax.loglog(freq_bins[(positions.astype(int)-1)], power)
 
@@ -137,7 +137,7 @@ def lorentzian_fit(x, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000
     "x": freq_bins[(positions.astype(int)-1)],
     "y": power
     }
-    guesses = scipy.optimize.least_squares(lorentz_wrapper, x0 = [10, 0], kwargs=kwargs, method='lm')
+    guesses = scipy.optimize.least_squares(lorentz_wrapper, x0 = [f_start, 0], kwargs=kwargs, method='lm')
     fc = guesses.x[0] # The corner freuency.
     ax.loglog(freq_bins[(positions.astype(int)-1)], lorentz_func(freq_bins[(positions.astype(int)-1)], fc=guesses.x[0], num=guesses.x[1]))
     plt.xlabel('Frequency, Hz')
