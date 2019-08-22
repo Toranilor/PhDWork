@@ -5,8 +5,70 @@ A set of functions to do some brownian motion analysis
 """
 import numpy as np
 import scipy as sp
+import scipy.signal as sig
 import matplotlib
 from matplotlib import pyplot as plt
+
+
+def exp_wrap(estimate, **data):
+    # A wrapper for returning the fitness of a curve estimate 
+    x = data.get('x')
+    y = data.get('y')*10**18 # Convert to nanometres for an actual fit!!
+    return np.linalg.norm(y - estimate[0]*np.exp(estimate[1]*x))
+
+def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*10**-3):
+    """
+    Fits an exponential decay to the autocorrelation function, then return
+    the stiffness. 
+        x_m is one dimensional position array
+        T is temperature in kelvin
+        dnvis is dynamic viscocity
+        radius is raius of the (assumed spherical) particle (meters)
+        t_scale is the length (in time) of our subtrajectory
+    """
+    stokes_drag = 6*np.pi*dnvis*radius
+    
+    # Calculate the length of a subteajectory in elements, and how many
+    # sub trajectories we can extract from our system.
+    sub_traj_length = int(t_scale//timestep)
+    num_traj = len(x)//sub_traj_length
+    small_correlation = np.zeros(sub_traj_length*2-3)
+    
+    # Generate the autocorrelation:
+    successes = num_traj
+    for j in range(num_traj):
+        start = j*sub_traj_length
+        end = (j+1)*sub_traj_length-1
+        try:
+            small_correlation += np.correlate(x[start:end]-np.mean(x), x[start:end]-np.mean(x),'full')
+        except ValueError:
+            successes = successes-1
+    
+    correlation = small_correlation[np.size(small_correlation)//2:]/num_traj/sub_traj_length
+    time_base = np.arange(sub_traj_length-1)*timestep
+    
+    # Plot the autocorrelation
+    fig, ax = plt.subplots()
+    ax.plot(time_base, correlation,'o')
+    ax.set_xlabel("Time, seconds")
+    ax.set_ylabel("Autocorrelation, m^2")
+    
+    # Fit to the autocorrelation
+    data = {'x':time_base,
+            'y':correlation}
+    guess = [0, 0]
+    coeffs = sp.optimize.least_squares(exp_wrap, x0=guess, kwargs=data).x
+    
+    # Plot the fit, converting our coefficient back into metres.
+    ax.plot(time_base, coeffs[0]/(10**18)*np.exp(coeffs[1]*time_base))
+    ax.legend(["Autocorrelation","fit to Autocorrelation"])
+    
+    stiff = -1*stokes_drag*coeffs[1]
+    ax.set_title('Axis Stiffness: %.3e N/m' % stiff)
+    
+    return stiff
+    
+    
 
 def stiffness_MSD(x, T):
     """
@@ -41,7 +103,7 @@ def MSD_gen(x, num_sub_traj=1000):
     return MSD_avg
 
 
-def gaussian_fit(x, T):
+def gaussian_fit(x, T, use_filter=True):
     """
     Performs a gaussian fit to a histogram of x.
     Also returns the stiffness according to this fit.
@@ -52,13 +114,20 @@ def gaussian_fit(x, T):
     from scipy.optimize import curve_fit
 
 
+    if use_filter:
+        # Generate a high pass filter
+        a, b = sig.butter(1,0.001,'high')
+        x_proc = sig.lfilter(a, b, x-np.mean(x))
+    else:
+        x_proc = x
+
     k_b = 1.3806*10**-23  # Boltzman's constant, SI units
     f,ax = plt.subplots()
-    n, bins, patches = plt.hist(x, bins=100, normed=True)
-    mu, sigma = norm.fit(x)
+    n, bins, patches = plt.hist(x_proc, bins=100, normed=True)
+    mu, sigma = norm.fit(x_proc)
     # add a 'best fit' line
     y = mlab.normpdf(bins, mu, sigma)
-    ax.plot(bins, y, 'r--', linewidth=2)
+    ax.plot(bins, y, '--', linewidth=2)
     ax.set_xlabel('position deviation metres')
     stiff =  k_b*T/((sigma)**2)
     ax.legend(['Gaussian fit', 'Position Histogram'])
@@ -175,9 +244,11 @@ def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end
     stiff_gauss, fig_gauss = gaussian_fit(x, T)
     fc, fig_lorentzian = lorentzian_fit(x, timestep, n_blocks, f_start, f_end)
     stiff_lorentzian = fc_stiff(fc, radius=radius, dnvis=dnvis)
+    stiff_auto= autocorr_fit(x, T, timestep=timestep, dnvis=dnvis, radius=radius, t_scale=4*10**-3)
 
     print('Gaussian Stiffness: %.3e N/m' % stiff_gauss)
     print('Lorentzian Stiffness: %.3e N/m' % stiff_lorentzian)
+    print('Autocorrelation Stiffness: %.3e N/m' % stiff_auto)
     plt.show()
 
     return 0
