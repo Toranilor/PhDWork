@@ -235,7 +235,7 @@ def fc_stiff(fc, radius=False, stokes=False, dnvis=False):
     stiffness = fc*2*np.pi*stokes_drag
     return stiffness
 
-def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000, radius=0.5*10**-6, dnvis=0.001):
+def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000, radius=0.5*10**-6, dnvis=0.001, plots=False):
     """
     A function to compute the trap stiffness via lorentzian and fitting a gaussian.
         Default parameters are for a 1um sphere in water
@@ -249,6 +249,7 @@ def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end
     print('Gaussian Stiffness: %.3e N/m' % stiff_gauss)
     print('Lorentzian Stiffness: %.3e N/m' % stiff_lorentzian)
     print('Autocorrelation Stiffness: %.3e N/m' % stiff_auto)
-    plt.show()
+    if plots:
+        plt.show()
 
-    return 0
+    return stiff_gauss, stiff_lorentzian, stiff_auto
