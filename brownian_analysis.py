@@ -26,6 +26,7 @@ def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*
         radius is raius of the (assumed spherical) particle (meters)
         t_scale is the length (in time) of our subtrajectory
     """
+    kb = 1.3806*10**-23 # boltzmann constant
     stokes_drag = 6*np.pi*dnvis*radius
     
     # Calculate the length of a subteajectory in elements, and how many
@@ -44,7 +45,7 @@ def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*
         except ValueError:
             successes = successes-1
     
-    correlation = small_correlation[np.size(small_correlation)//2:]/num_traj/sub_traj_length
+    correlation = small_correlation[np.size(small_correlation)//2:]/num_traj/(sub_traj_length*2)
     time_base = np.arange(sub_traj_length-1)*timestep
     
     # Plot the autocorrelation
@@ -64,7 +65,7 @@ def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*
     ax.legend(["Autocorrelation","fit to Autocorrelation"])
     
     stiff = -1*stokes_drag*coeffs[1]
-    ax.set_title('Axis Stiffness: %.3e N/m' % stiff)
+    ax.set_title('Axis Stiffness: %.3e N/m, Scale = %.3e N/m' % (stiff, coeffs[0]/(kb*T/stiff)/(10**18) ))
     
     return stiff
     
