@@ -9,14 +9,26 @@ import scipy.signal as sig
 import matplotlib
 from matplotlib import pyplot as plt
 
-
+def yield_correlation(trap_a, trap_b, traj_size, num_traj):
+    trap_a = trap_a-np.mean(trap_a)
+    trap_b = trap_b-np.mean(trap_b)
+    correlation = np.zeros(traj_size-1)
+    for i in range(num_traj-1):
+        small_correlation = np.zeros(traj_size-1)
+        for k in range(traj_size-1):
+            for j in range(traj_size-k):
+                small_correlation[k] = small_correlation[k] + trap_a[j+(i*traj_size)+k]*trap_b[j+(i*traj_size)]
+            small_correlation[k] = small_correlation[k]/(traj_size-k)
+        correlation = correlation + small_correlation
+    return correlation/num_traj
+        
 def exp_wrap(estimate, **data):
     # A wrapper for returning the fitness of a curve estimate 
     x = data.get('x')
     y = data.get('y')*10**18 # Convert to nanometres for an actual fit!!
     return np.linalg.norm(y - estimate[0]*np.exp(estimate[1]*x))
 
-def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*10**-3):
+def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=6*10**-3):
     """
     Fits an exponential decay to the autocorrelation function, then return
     the stiffness. 
@@ -28,11 +40,20 @@ def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*
     """
     kb = 1.3806*10**-23 # boltzmann constant
     stokes_drag = 6*np.pi*dnvis*radius
+    #Fix to handle weather or not x is a numpy thing or a array
+    try:
+        x[0]
+    except KeyError:
+        x = x.values
     
     # Calculate the length of a subteajectory in elements, and how many
     # sub trajectories we can extract from our system.
     sub_traj_length = int(t_scale//timestep)
     num_traj = len(x)//sub_traj_length
+    correlation = yield_correlation(x,x,sub_traj_length,num_traj)
+
+
+    """
     small_correlation = np.zeros(sub_traj_length*2-3)
     
     # Generate the autocorrelation:
@@ -45,7 +66,8 @@ def autocorr_fit(x, T, timestep=5*10**-6, dnvis=0.001, radius=10**-6, t_scale=4*
         except ValueError:
             successes = successes-1
     
-    correlation = small_correlation[np.size(small_correlation)//2:]/num_traj/(sub_traj_length*2)
+    correlation = small_correlation[np.size(small_correlation)//2:]/successes/(sub_traj_length*2)
+    """
     time_base = np.arange(sub_traj_length-1)*timestep
     
     # Plot the autocorrelation
@@ -245,7 +267,7 @@ def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end
     stiff_gauss, fig_gauss = gaussian_fit(x, T)
     fc, fig_lorentzian = lorentzian_fit(x, timestep, n_blocks, f_start, f_end)
     stiff_lorentzian = fc_stiff(fc, radius=radius, dnvis=dnvis)
-    stiff_auto= autocorr_fit(x, T, timestep=timestep, dnvis=dnvis, radius=radius, t_scale=4*10**-3)
+    stiff_auto= autocorr_fit(x, T, timestep=timestep, dnvis=dnvis, radius=radius, t_scale=10*10**-3)
 
     print('Gaussian Stiffness: %.3e N/m' % stiff_gauss)
     print('Lorentzian Stiffness: %.3e N/m' % stiff_lorentzian)
