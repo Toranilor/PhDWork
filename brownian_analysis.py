@@ -19,6 +19,7 @@ def yield_correlation(trap_a, trap_b, traj_size, num_traj):
             for j in range(traj_size-k):
                 small_correlation[k] = small_correlation[k] + trap_a[j+(i*traj_size)+k]*trap_b[j+(i*traj_size)]
             small_correlation[k] = small_correlation[k]/(traj_size-k)
+            #small_correlation[k] = np.corrcoef(trap_a[i*traj_size+k:(i+1)*traj_size], trap_b[i*traj_size:(i+1)*traj_size-k])[0,1]
         correlation = correlation + small_correlation
     return correlation/num_traj
         
@@ -138,7 +139,7 @@ def gaussian_fit(x, T, use_filter=True):
 
 
     if use_filter:
-        # Generate a high pass filter
+        # Generate a high pass filter (# This is 100Hz on a normal 5 us sample rate)
         a, b = sig.butter(1,0.001,'high')
         x_proc = sig.lfilter(a, b, x-np.mean(x))
     else:
@@ -152,6 +153,7 @@ def gaussian_fit(x, T, use_filter=True):
     y = mlab.normpdf(bins, mu, sigma)
     ax.plot(bins, y, '--', linewidth=2)
     ax.set_xlabel('position deviation metres')
+    print(mu,sigma)
     stiff =  k_b*T/((sigma)**2)
     ax.legend(['Gaussian fit', 'Position Histogram'])
     ax.set_title('Axis Stiffness: %.3e N/m' % stiff)
@@ -258,7 +260,7 @@ def fc_stiff(fc, radius=False, stokes=False, dnvis=False):
     stiffness = fc*2*np.pi*stokes_drag
     return stiffness
 
-def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000, radius=0.5*10**-6, dnvis=0.001, plots=False):
+def general_check(x, T=300, timestep=5*10**-6, n_blocks=10000, f_start=10, f_end=20000, radius=0.5*10**-6, dnvis=0.001, plots=False, use_filter=True):
     """
     A function to compute the trap stiffness via lorentzian and fitting a gaussian.
         Default parameters are for a 1um sphere in water
