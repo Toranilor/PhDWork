@@ -150,7 +150,7 @@ def gaussian_fit(x, T, use_filter=True):
     n, bins, patches = plt.hist(x_proc, bins=100, normed=True)
     mu, sigma = norm.fit(x_proc)
     # add a 'best fit' line
-    y = mlab.normpdf(bins, mu, sigma)
+    y = norm.pdf(bins, mu, sigma)
     ax.plot(bins, y, '--', linewidth=2)
     ax.set_xlabel('position deviation metres')
     print(mu,sigma)
