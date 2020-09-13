@@ -77,7 +77,7 @@ def param_read(param_loc=False,
     lines = np.float32(file.read().split('\t'))
     v_num = lines[-1]
     if param_loc:
-        if v_num == np.float32(0.4) or v_num == np.float32(0.45) or v_num == np.float32(0.46) or v_num == np.float32(0.47):
+        if v_num == np.float32(0.4) or v_num == np.float32(0.45) or v_num == np.float32(0.46) or v_num == np.float32(0.47) or v_num == np.float32(0.48):
             struct.Xmin = lines[0]                              # MHz
             struct.Xmax = lines[1]                              # MHz
             struct.Xpoints = lines[2]                           # Number
@@ -183,24 +183,14 @@ def param_read(param_loc=False,
         file = open(exp_loc, "r")
         data = np.loadtxt(file)
         if v_num < 0.6:  # Added a version 0.6 that's just for brownian motion
-            # Remove rows that are zero-rows (from a default value issue in LabView)
-            stop_index = np.where(~data[:, 0:3].any(axis=1))[0]
-            if stop_index:
-                X_positions = data[0:stop_index[0], 0]
-                Y_positions = data[0:stop_index[0], 1]
-                Intensities = data[0:stop_index[0], 2]
-                Z_positions = data[0:stop_index[0], 3]
-                X_AOD_position = data[0:stop_index[0], 4]
-                Y_AOD_position = data[0:stop_index[0], 5]
-            else:
-                X_positions = data[:, 0]
-                Y_positions = data[:, 1]
-                Intensities = data[:, 2]
-                Z_positions = data[:, 3]
-                X_AOD_position = data[:, 4]
-                Y_AOD_position = data[:, 5]
-                if len(data[0,:]) > 6:
-                    Write_Index = data[:,6]
+            X_positions = data[:, 0]
+            Y_positions = data[:, 1]
+            Intensities = data[:, 2]
+            Z_positions = data[:, 3]
+            X_AOD_position = data[:, 4]
+            Y_AOD_position = data[:, 5]
+            if len(data[0,:]) > 6:
+                Write_Index = data[:,6]
             # Do we shift it so the mean position is zero?
             if mean_shift:
                 struct.X_positions = X_positions - np.mean(X_positions)
